@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+{
+    "name": "POS Session Report for Admins (USB Printers)",
+    "version": "18.0.1.0.0",
+    "category": "Point of Sale",
+    "summary": "Print the session sales report on regular USB printers, visible to session admins only",
+    "description": """
+POS Session Report for Admins
+==============================
+
+The built-in "Print Report" menu item (the session sales details report,
+printed from the burger menu in the POS session) is normally only shown
+when an ePOS/IoT Box network printer is configured
+(`pos.config.iface_print_via_proxy`), because it prints directly through
+that proxy connection with no fallback for anything else.
+
+This module:
+
+- Makes "Print Report" available even when the POS only has a regular
+  (USB-connected / browser-driven) printer, by falling back to the
+  standard web print dialog when no proxy printer is connected -
+  exactly like the receipt and bill already do.
+- Restricts the "Print Report" menu item to session admins/managers when
+  Employee Login (pos_hr) is used, hiding it from regular employees. If
+  Employee Login isn't used, it stays visible to everyone (there is no
+  employee/admin distinction in that case).
+    """,
+    "depends": ["point_of_sale"],
+    "assets": {
+        "point_of_sale._assets_pos": [
+            "pos_admin_session_report/static/src/js/**/*",
+            "pos_admin_session_report/static/src/xml/**/*",
+        ],
+    },
+    "installable": True,
+    "application": False,
+    "auto_install": False,
+    "license": "LGPL-3",
+    "author": "Yousif Shakir",
+    "website": "https://donialink.com",
+}
