@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "POS Session Report for Admins (USB Printers)",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Point of Sale",
     "summary": "Print the session sales report on regular USB printers, visible to session admins only",
     "description": """
@@ -24,6 +24,9 @@ This module:
   Employee Login (pos_hr) is used, hiding it from regular employees. If
   Employee Login isn't used, it stays visible to everyone (there is no
   employee/admin distinction in that case).
+- Automatically prints the session sales details report the moment the
+  register is closed, so it no longer depends on someone remembering to
+  click "Print Report" beforehand.
     """,
     "depends": ["point_of_sale"],
     "assets": {

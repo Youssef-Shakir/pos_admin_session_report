@@ -3,6 +3,7 @@
 import { patch } from "@web/core/utils/patch";
 import { useService } from "@web/core/utils/hooks";
 import { Navbar } from "@point_of_sale/app/navbar/navbar";
+import { ClosePosPopup } from "@point_of_sale/app/navbar/closing_popup/closing_popup";
 import { handleSaleDetails } from "@point_of_sale/app/navbar/sale_details_button/sale_details_button";
 
 /**
@@ -13,6 +14,32 @@ import { handleSaleDetails } from "@point_of_sale/app/navbar/sale_details_button
  * the button never appears for them even though printing the report the
  * same way the receipt/bill already print would work fine.
  */
+
+/**
+ * Wraps the generic `printer` service (browser print dialog, used by
+ * USB-connected printers) in the `{ printer: { printReceipt } }` shape
+ * `handleSaleDetails` expects from `hardwareProxy`.
+ */
+function asHardwareProxy(printerService) {
+    return {
+        printer: {
+            async printReceipt(el) {
+                try {
+                    const printed = await printerService.printHtml(el, {
+                        webPrintFallback: true,
+                    });
+                    return { successful: Boolean(printed), message: {} };
+                } catch (error) {
+                    return {
+                        successful: false,
+                        message: { title: error.title, body: error.body },
+                    };
+                }
+            },
+        },
+    };
+}
+
 patch(Navbar.prototype, {
     setup() {
         super.setup(...arguments);
@@ -37,24 +64,38 @@ patch(Navbar.prototype, {
         // No proxy printer: reuse the same report data/rendering as core,
         // but print it through the generic printer service so it falls
         // back to the browser print dialog (regular USB printers).
-        const printerService = this.printer;
-        const webPrintProxy = {
-            printer: {
-                async printReceipt(el) {
-                    try {
-                        const printed = await printerService.printHtml(el, {
-                            webPrintFallback: true,
-                        });
-                        return { successful: Boolean(printed), message: {} };
-                    } catch (error) {
-                        return {
-                            successful: false,
-                            message: { title: error.title, body: error.body },
-                        };
-                    }
-                },
-            },
-        };
-        await handleSaleDetails(this.pos, webPrintProxy, this.dialog);
+        await handleSaleDetails(this.pos, asHardwareProxy(this.printer), this.dialog);
+    },
+});
+
+/**
+ * Auto-print the session sales details report the moment the register is
+ * closed, so the report doesn't depend on someone remembering to click
+ * "Print Report" first. Printed before the actual close RPC (rather than
+ * after) since a successful close immediately reloads the page, which would
+ * otherwise race with - and likely cut off - the print.
+ */
+patch(ClosePosPopup.prototype, {
+    setup() {
+        super.setup(...arguments);
+        this.printer = useService("printer");
+    },
+
+    get canPrintSessionReport() {
+        return !this.pos.config.module_pos_hr || this.pos.employeeIsAdmin;
+    },
+
+    async closeSession() {
+        if (this.canPrintSessionReport) {
+            const proxy = this.hardwareProxy.printer
+                ? this.hardwareProxy
+                : asHardwareProxy(this.printer);
+            try {
+                await handleSaleDetails(this.pos, proxy, this.dialog);
+            } catch (error) {
+                console.warn("Auto-print of the session report failed", error);
+            }
+        }
+        await super.closeSession(...arguments);
     },
 });
