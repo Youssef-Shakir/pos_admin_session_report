@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- English Template -->
+    <t t-name="pos_admin_session_report.CustomSessionReport" owl="1">
+        <div class="pos-custom-report" style="font-family: Arial, sans-serif; font-size: 12px; width: 300px; padding: 10px;">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <strong style="font-size: 16px; font-weight: bold;">SESSION REPORT</strong><br/>
+                <strong t-esc="data.config_name"/><br/>
+                <span t-esc="data.session_name"/>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                <tr>
+                    <td style="font-weight: bold;">Opened:</td>
+                    <td style="text-align: right;" t-esc="data.opening_date"/>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Closing Cashier:</td>
+                    <td style="text-align: right;" t-esc="data.closing_cashier"/>
+                </tr>
+            </table>
+
+            <!-- Sales by Category -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">SALES BY CATEGORY</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">Category</th>
+                            <th style="text-align: center; padding: 4px; border: 1px solid #000; font-weight: bold;">Qty</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.categories" t-as="cat" t-key="cat.name">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="cat.name"/>
+                                <td style="text-align: center; padding: 3px; border: 1px solid #000;" t-esc="cat.qty"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cat.total)"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Employees -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">SALES BY EMPLOYEE</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">Employee</th>
+                            <th style="text-align: center; padding: 4px; border: 1px solid #000; font-weight: bold;">Orders</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.employees" t-as="emp" t-key="emp.name">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="emp.name"/>
+                                <td style="text-align: center; padding: 3px; border: 1px solid #000;" t-esc="emp.orders"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(emp.total)"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">TOTALS</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <tr>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Gross Total (Before Discount):</td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(data.gross_total)"/>
+                        </tr>
+                        <tr>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Total Discount:</td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(data.total_discount)"/>
+                        </tr>
+                        <tr>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Total Refunds:</td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(data.total_refunds)"/>
+                        </tr>
+                        <tr style="background-color: #f0f0f0;">
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Net Total:</td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(data.net_total)"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Session Info -->
+            <div style="margin-bottom: 10px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: bold;">Number of Transactions:</td>
+                            <td style="text-align: right;" t-esc="data.num_transactions"/>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">Deleted Orders:</td>
+                            <td style="text-align: right;" t-esc="data.deleted_orders"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Payments -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">PAYMENTS</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <t t-foreach="data.payments" t-as="payment" t-key="payment.method">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="payment.method"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(payment.total)"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid #000; font-size: 10px;">
+                <span t-esc="currentDateTime"/><br/>
+                <strong t-esc="data.company_name"/><br/>
+                <span t-esc="data.author"/>
+            </div>
+        </div>
+    </t>
+
+    <!-- Arabic Template -->
+    <t t-name="pos_admin_session_report.CustomSessionReportArabic" owl="1">
+        <div class="pos-custom-report" dir="rtl" style="font-family: Arial, Tahoma, sans-serif; font-size: 12px; width: 300px; padding: 10px; text-align: right;">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <strong style="font-size: 16px; font-weight: bold;">تقرير الجلسة</strong><br/>
+                <strong t-esc="data.config_name"/><br/>
+                <span t-esc="data.session_name"/>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                <tr>
+                    <td style="font-weight: bold;">وقت الفتح:</td>
+                    <td style="text-align: left;" t-esc="data.opening_date"/>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">امين الصندوق المغلق:</td>
+                    <td style="text-align: left;" t-esc="data.closing_cashier"/>
+                </tr>
+            </table>
+
+            <!-- Sales by Category -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">المبيعات حسب الفئة</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">الفئة</th>
+                            <th style="text-align: center; padding: 4px; border: 1px solid #000; font-weight: bold;">الكمية</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.categories" t-as="cat" t-key="cat.name">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="cat.name"/>
+                                <td style="text-align: center; padding: 3px; border: 1px solid #000;" t-esc="cat.qty"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cat.total)"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Employees -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">المبيعات حسب الموظف</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">الموظف</th>
+                            <th style="text-align: center; padding: 4px; border: 1px solid #000; font-weight: bold;">الطلبات</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.employees" t-as="emp" t-key="emp.name">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="emp.name"/>
+                                <td style="text-align: center; padding: 3px; border: 1px solid #000;" t-esc="emp.orders"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(emp.total)"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">الاجماليات</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <tr>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">الاجمالي قبل الخصم:</td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(data.gross_total)"/>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">اجمالي الخصم:</td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(data.total_discount)"/>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">اجمالي المرتجعات:</td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(data.total_refunds)"/>
+                        </tr>
+                        <tr style="background-color: #f0f0f0;">
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">الصافي:</td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(data.net_total)"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Session Info -->
+            <div style="margin-bottom: 10px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: bold;">عدد المعاملات:</td>
+                            <td style="text-align: left;" t-esc="data.num_transactions"/>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">الطلبات المحذوفة:</td>
+                            <td style="text-align: left;" t-esc="data.deleted_orders"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Payments -->
+            <div style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">المدفوعات</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <t t-foreach="data.payments" t-as="payment" t-key="payment.method">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="payment.method"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(payment.total)"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid #000; font-size: 10px;">
+                <span t-esc="currentDateTime"/><br/>
+                <strong t-esc="data.company_name"/><br/>
+                <span t-esc="data.author"/>
+            </div>
+        </div>
+    </t>
+
+</templates>

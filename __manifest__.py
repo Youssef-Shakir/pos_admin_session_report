@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "POS Session Report for Admins (USB Printers)",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.3.0",
     "category": "Point of Sale",
     "summary": "Print the session sales report on regular USB printers, visible to session admins only",
     "description": """
@@ -27,8 +27,14 @@ This module:
 - Automatically prints the session sales details report the moment the
   register is closed, so it no longer depends on someone remembering to
   click "Print Report" beforehand.
+- Custom session report templates (English and Arabic) with sales by
+  category, employee sales, totals, discounts, refunds, and payments.
+- Configurable default report template in POS settings.
     """,
-    "depends": ["point_of_sale"],
+    "depends": ["point_of_sale", "pos_hr"],
+    "data": [
+        "views/pos_config_views.xml",
+    ],
     "assets": {
         "point_of_sale._assets_pos": [
             "pos_admin_session_report/static/src/js/**/*",
