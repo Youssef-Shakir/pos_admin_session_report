@@ -1,9 +1,21 @@
 # -*- coding: utf-8 -*-
-from odoo import models, api
+from odoo import models, api, fields
 
 
 class PosSession(models.Model):
     _inherit = 'pos.session'
+
+    def _report_localize(self, value):
+        """Return a datetime formatted in the current user's timezone.
+
+        ``start_at`` and friends are stored naive in UTC. Formatting them
+        directly prints UTC, which does not match the clock on the POS
+        machine. ``context_timestamp`` shifts them to the user's timezone
+        (the same convention the standard Odoo receipts use).
+        """
+        if not value:
+            return ''
+        return fields.Datetime.context_timestamp(self, value).strftime('%Y-%m-%d %H:%M')
 
     @api.model
     def get_custom_session_report_data(self, session_id):
@@ -125,7 +137,11 @@ class PosSession(models.Model):
         return {
             'session_name': session.name,
             'config_name': session.config_id.name,
-            'opening_date': session.start_at.strftime('%Y-%m-%d %H:%M') if session.start_at else '',
+            'opening_date': self._report_localize(session.start_at),
+            'closing_date': self._report_localize(session.stop_at),
+            # Server "now", localized to the user's timezone so it matches the
+            # clock on the POS machine.
+            'print_date': self._report_localize(fields.Datetime.now()),
             'closing_cashier': closing_cashier,
             'categories': category_list,
             'employees': employee_list,

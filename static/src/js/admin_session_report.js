@@ -7,6 +7,9 @@ import { ClosePosPopup } from "@point_of_sale/app/navbar/closing_popup/closing_p
 import { renderToElement } from "@web/core/utils/render";
 import { handleSaleDetails } from "@point_of_sale/app/navbar/sale_details_button/sale_details_button";
 import { SelectionPopup } from "@point_of_sale/app/utils/input_popups/selection_popup";
+import { formatDateTime } from "@web/core/l10n/dates";
+
+const { DateTime } = luxon;
 
 /**
  * Renders and prints the custom session report.
@@ -29,9 +32,11 @@ async function printCustomReport(pos, printer, hardwareProxy, templateType) {
         return pos.env.utils.formatCurrency(amount);
     };
 
-    // Current date/time
-    const now = new Date();
-    const currentDateTime = now.toLocaleString();
+    // Time the report is printed. Prefer the server clock (already shifted to
+    // the user's timezone by the backend) so it lines up with the opening
+    // date on the same report; fall back to the local clock, formatted the
+    // same way the standard Odoo sale details report does.
+    const currentDateTime = data.print_date || formatDateTime(DateTime.now());
 
     // Select template based on type
     const templateName = templateType === 'custom_arabic'
