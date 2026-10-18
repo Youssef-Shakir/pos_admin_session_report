@@ -102,6 +102,32 @@
                 </table>
             </div>
 
+            <!-- Discount Details -->
+            <div t-if="data.discount_orders and data.discount_orders.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">DISCOUNT DETAILS</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">Order</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">Employee</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">Discount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.discount_orders" t-as="disc" t-key="disc_index">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">#<t t-esc="disc.ref"/><t t-if="disc.table"> T<t t-esc="disc.table"/></t></td>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="disc.employee"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(disc.amount)"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: left; padding: 3px; border: 1px solid #000; font-size: 10px;" t-esc="disc.items"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Session Info -->
             <div style="margin-bottom: 10px;">
                 <table style="width: 100%; border-collapse: collapse;">
@@ -114,6 +140,35 @@
                             <td style="font-weight: bold;">Deleted Orders:</td>
                             <td style="text-align: right;" t-esc="data.deleted_orders"/>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Cancelled Orders -->
+            <div t-if="data.cancelled_orders and data.cancelled_orders.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">CANCELLED ORDERS</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">Order</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">By</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.cancelled_orders" t-as="canc" t-key="canc.id">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">#<t t-esc="canc.ref"/><t t-if="canc.table"> T<t t-esc="canc.table"/></t> <span style="font-weight: normal;" t-esc="canc.time"/></td>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="canc.by"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(canc.amount)"/>
+                            </tr>
+                            <tr t-if="canc.items">
+                                <td colspan="3" style="text-align: left; padding: 3px; border: 1px solid #000; font-size: 10px;" t-esc="canc.items"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: left; padding: 3px; border: 1px solid #000;"><strong>Reason:</strong> <t t-if="canc.reason" t-esc="canc.reason"/><t t-else="">No reason entered</t></td>
+                            </tr>
+                        </t>
                     </tbody>
                 </table>
             </div>
@@ -243,6 +298,32 @@
                 </table>
             </div>
 
+            <!-- Discount Details -->
+            <div t-if="data.discount_orders and data.discount_orders.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">تفاصيل الخصومات</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">الطلب</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">الموظف</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">الخصم</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.discount_orders" t-as="disc" t-key="disc_index">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">#<t t-esc="disc.ref"/><t t-if="disc.table"> طاولة <t t-esc="disc.table"/></t></td>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="disc.employee"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(disc.amount)"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 3px; border: 1px solid #000; font-size: 10px;" t-esc="disc.items"/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Session Info -->
             <div style="margin-bottom: 10px;">
                 <table style="width: 100%; border-collapse: collapse;">
@@ -255,6 +336,35 @@
                             <td style="font-weight: bold;">الطلبات المحذوفة:</td>
                             <td style="text-align: left;" t-esc="data.deleted_orders"/>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Cancelled Orders -->
+            <div t-if="data.cancelled_orders and data.cancelled_orders.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">الطلبات الملغاة</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">الطلب</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">بواسطة</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">المبلغ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.cancelled_orders" t-as="canc" t-key="canc.id">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">#<t t-esc="canc.ref"/><t t-if="canc.table"> طاولة <t t-esc="canc.table"/></t> <span style="font-weight: normal;" t-esc="canc.time"/></td>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="canc.by"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(canc.amount)"/>
+                            </tr>
+                            <tr t-if="canc.items">
+                                <td colspan="3" style="text-align: right; padding: 3px; border: 1px solid #000; font-size: 10px;" t-esc="canc.items"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 3px; border: 1px solid #000;"><strong>السبب:</strong> <t t-if="canc.reason" t-esc="canc.reason"/><t t-else="">لم يتم إدخال سبب</t></td>
+                            </tr>
+                        </t>
                     </tbody>
                 </table>
             </div>
