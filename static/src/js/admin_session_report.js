@@ -8,18 +8,22 @@ import { renderToElement } from "@web/core/utils/render";
 import { handleSaleDetails } from "@point_of_sale/app/navbar/sale_details_button/sale_details_button";
 import { SelectionPopup } from "@point_of_sale/app/utils/input_popups/selection_popup";
 import { formatDateTime } from "@web/core/l10n/dates";
+import { parseFloat } from "@web/views/fields/parsers";
+import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 
 const { DateTime } = luxon;
 
 /**
  * Renders and prints the custom session report.
  */
-async function printCustomReport(pos, printer, hardwareProxy, templateType) {
-    // Fetch report data from backend using pos.data.call
+async function printCustomReport(pos, printer, hardwareProxy, templateType, closing = null) {
+    // Fetch report data from the server. Orders are synced before (see syncBeforeReport), so the
+    // figures are the session's real ones; `closing` adds what the cashier counted when closing.
     const data = await pos.data.call(
         'pos.session',
         'get_custom_session_report_data',
-        [pos.session.id]
+        [pos.session.id],
+        { closing: closing }
     );
 
     if (!data || !data.session_name) {
@@ -83,9 +87,30 @@ function asHardwareProxy(printerService) {
 }
 
 /**
+ * Send the orders still waiting on this device before printing: with a poor connection the
+ * server would otherwise print old figures. Returns false when they could not be sent.
+ */
+async function syncBeforeReport(pos, dialog) {
+    let synced = false;
+    try {
+        synced = await pos.push_orders_with_closing_popup();
+    } catch (error) {
+        console.warn("Session report: orders could not be synced", error);
+    }
+    if (!synced) {
+        dialog.add(AlertDialog, {
+            title: "Report not printed",
+            body: "Some orders are not sent to the server yet (no or poor internet). " +
+                "The report would show old figures. Check the connection and try again.",
+        });
+    }
+    return synced;
+}
+
+/**
  * Print report based on template setting
  */
-async function printReportByTemplate(pos, printer, hardwareProxy, dialog, templateSetting) {
+async function printReportByTemplate(pos, printer, hardwareProxy, dialog, templateSetting, closing = null) {
     const proxy = hardwareProxy.printer ? hardwareProxy : asHardwareProxy(printer);
 
     if (templateSetting === 'standard') {
@@ -93,11 +118,11 @@ async function printReportByTemplate(pos, printer, hardwareProxy, dialog, templa
     } else if (templateSetting === 'custom') {
         const printerSvc = hardwareProxy.printer ? null : printer;
         const hwProxy = hardwareProxy.printer ? hardwareProxy : null;
-        await printCustomReport(pos, printerSvc, hwProxy, 'custom');
+        await printCustomReport(pos, printerSvc, hwProxy, 'custom', closing);
     } else if (templateSetting === 'custom_arabic') {
         const printerSvc = hardwareProxy.printer ? null : printer;
         const hwProxy = hardwareProxy.printer ? hardwareProxy : null;
-        await printCustomReport(pos, printerSvc, hwProxy, 'custom_arabic');
+        await printCustomReport(pos, printerSvc, hwProxy, 'custom_arabic', closing);
     }
 }
 
@@ -118,6 +143,9 @@ patch(Navbar.prototype, {
 
     async showSaleDetails() {
         const templateSetting = this.pos.config.session_report_template || 'ask';
+        if (!(await syncBeforeReport(this.pos, this.dialog))) {
+            return;
+        }
 
         // If a default template is set, print directly
         if (templateSetting !== 'ask') {
@@ -169,8 +197,44 @@ patch(ClosePosPopup.prototype, {
         return !this.pos.config.module_pos_hr || this.pos.employeeIsAdmin;
     },
 
+    /**
+     * What the cashier entered in this popup: counted amount per payment method, notes and who
+     * closes. Printed on the report as expected / counted / difference.
+     */
+    _sessionReportClosingDetails() {
+        const counted = {};
+        const read = (id) => {
+            const value = this.state.payments[id]?.counted;
+            if (value === undefined || value === null || value === "") {
+                return null;
+            }
+            try {
+                return parseFloat(String(value));
+            } catch {
+                return null;
+            }
+        };
+        if (this.pos.config.cash_control && this.props.default_cash_details) {
+            counted[this.props.default_cash_details.id] = read(this.props.default_cash_details.id);
+        }
+        for (const pm of this.props.non_cash_payment_methods || []) {
+            counted[pm.id] = read(pm.id);
+        }
+        return {
+            counted,
+            notes: this.state.notes || "",
+            closed_by: this.pos.get_cashier()?.name || "",
+        };
+    },
+
     async closeSession() {
         if (this.canPrintSessionReport) {
+            // Orders first, so the closing report is never printed with old figures. If they can't
+            // be sent, the standard closing would stop here anyway.
+            if (!(await syncBeforeReport(this.pos, this.dialog))) {
+                return;
+            }
+            const closing = this._sessionReportClosingDetails();
             const templateSetting = this.pos.config.session_report_template || 'ask';
 
             // If a default template is set, print directly
@@ -181,7 +245,8 @@ patch(ClosePosPopup.prototype, {
                         this.printer,
                         this.hardwareProxy,
                         this.dialog,
-                        templateSetting
+                        templateSetting,
+                        closing
                     );
                 } catch (error) {
                     console.warn("Auto-print of the session report failed", error);
@@ -207,7 +272,8 @@ patch(ClosePosPopup.prototype, {
                                             self.printer,
                                             self.hardwareProxy,
                                             self.dialog,
-                                            selected
+                                            selected,
+                                            closing
                                         );
                                     } catch (error) {
                                         console.warn("Auto-print of the session report failed", error);

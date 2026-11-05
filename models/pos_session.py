@@ -72,8 +72,91 @@ class PosSession(models.Model):
         return result
 
     @api.model
-    def get_custom_session_report_data(self, session_id):
-        """Get all data needed for the custom session report."""
+    def _report_cash_moves(self, session):
+        """Cash in / cash out of the session (expenses paid from the drawer, owner collections...),
+        with the category when Expenses & Cash Control categorized them."""
+        lines = session.statement_line_ids.sorted(lambda l: (l.create_date or l.date, l.id))
+        categories = {}
+        if 'pos.cash.move' in self.env:
+            moves = self.env['pos.cash.move'].sudo().search([('statement_line_id', 'in', lines.ids)])
+            categories = {m.statement_line_id.id: m.category_id.name or '' for m in moves}
+        prefix = '%s-' % session.name
+        result = []
+        for line in lines:
+            reason = line.payment_ref or ''
+            # the POS writes "<session>-<in|out>-<reason>"
+            if reason.startswith(prefix):
+                reason = reason[len(prefix):].split('-', 1)[-1]
+            result.append({
+                'id': line.id,
+                'type': 'in' if line.amount >= 0 else 'out',
+                'reason': reason,
+                'category': categories.get(line.id, ''),
+                'by': line.create_uid.name or '',
+                'time': fields.Datetime.context_timestamp(self, line.create_date).strftime('%H:%M')
+                if line.create_date else '',
+                'amount': line.amount,
+            })
+        return result
+
+    @api.model
+    def _report_closing(self, session, closing=None):
+        """Expected / counted / difference per payment method.
+
+        ``closing`` comes from the closing popup, before the session is closed:
+        {'counted': {payment_method_id: amount}, 'notes': str, 'closed_by': str}. Without it (report
+        printed during the session, or after closing) the values stored on the session are used."""
+        closing = closing or {}
+        counted = {int(k): v for k, v in (closing.get('counted') or {}).items() if v is not None}
+        cash_method = session.payment_method_ids.filtered('is_cash_count')[:1]
+        payments = self.env['pos.payment'].sudo()._read_group(
+            session._get_captured_payments_domain(), ['payment_method_id'], ['amount:sum'])
+        by_method = {method: amount for method, amount in payments}
+        methods = []
+        cash = None
+        if cash_method:
+            session.invalidate_recordset(['cash_register_balance_end'])
+            expected = session.cash_register_balance_end
+            if cash_method.id in counted:
+                count = float(counted[cash_method.id])
+            elif session.state in ('closing_control', 'closed') and session.cash_register_balance_end_real:
+                count = session.cash_register_balance_end_real
+            else:
+                count = None
+            cash_moves = sum(session.statement_line_ids.mapped('amount')) if session.state != 'closed' \
+                else session.cash_real_transaction
+            cash = {
+                'method': cash_method.name,
+                'opening': session.cash_register_balance_start,
+                'payments': by_method.get(cash_method, 0.0),
+                'moves': cash_moves,
+                'expected': expected,
+                'counted': count,
+                'difference': None if count is None else count - expected,
+            }
+            methods.append(dict(cash, is_cash=True))
+        for method in session.payment_method_ids.filtered(lambda m: not m.is_cash_count):
+            expected = by_method.get(method, 0.0)
+            count = float(counted[method.id]) if method.id in counted else None
+            methods.append({
+                'method': method.name, 'is_cash': False, 'expected': expected, 'counted': count,
+                'difference': None if count is None else count - expected,
+            })
+        return {
+            'is_closing': bool(closing) or session.state == 'closed',
+            'cash': cash,
+            'methods': methods,
+            'total_difference': sum(m['difference'] for m in methods if m['difference'] is not None),
+            'notes': closing.get('notes') or session.closing_notes or '',
+            'closed_by': closing.get('closed_by') or '',
+        }
+
+    @api.model
+    def get_custom_session_report_data(self, session_id, closing=None):
+        """Get all data needed for the custom session report.
+
+        ``closing``: what the cashier counted in the closing popup (see _report_closing); the report
+        printed at closing then shows the counted cash and the differences."""
         session = self.browse(session_id)
         if not session.exists():
             return {}
@@ -212,8 +295,11 @@ class PosSession(models.Model):
             for name, total in payments.items()
         ]
 
-        # Closing cashier
-        closing_cashier = session.user_id.name or 'Unknown'
+        closing_data = self._report_closing(session, closing)
+        cash_moves = self._report_cash_moves(session)
+
+        # Closing cashier: the employee who closes (from the POS), else the session user
+        closing_cashier = closing_data['closed_by'] or session.user_id.name or 'Unknown'
 
         # Number of transactions
         num_transactions = len(all_orders)
@@ -238,6 +324,11 @@ class PosSession(models.Model):
             'deleted_orders': deleted_orders,
             'num_transactions': num_transactions,
             'payments': payment_list,
+            'cash_moves': cash_moves,
+            'cash_in_total': sum(m['amount'] for m in cash_moves if m['amount'] > 0),
+            'cash_out_total': -sum(m['amount'] for m in cash_moves if m['amount'] < 0),
+            'closing': closing_data,
+            'synced_at': self._report_localize(fields.Datetime.now()),
             'company_name': 'donialink.com',
             'author': 'Yousif Shakir',
         }

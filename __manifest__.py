@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "POS Session Report for Admins (USB Printers)",
-    "version": "18.0.1.4.0",
+    "version": "18.0.1.5.0",
     "category": "Point of Sale",
     "summary": "Print the session sales report on regular USB printers, visible to session admins only",
     "description": """
@@ -30,6 +30,11 @@ This module:
 - Custom session report templates (English and Arabic) with sales by
   category, employee sales, totals, discounts, refunds, and payments.
 - Configurable default report template in POS settings.
+- Before printing, the orders waiting on the device are sent; with no or a
+  poor connection the report is not printed instead of showing old figures.
+- At closing the custom reports print the session cash in / out (expenses)
+  and the closing: expected, counted and difference (shortage / overage)
+  per payment method, with the closing notes.
     """,
     "depends": ["point_of_sale", "pos_hr"],
     "data": [

@@ -188,6 +188,77 @@
                 </table>
             </div>
 
+            <!-- Cash in / out (session expenses) -->
+            <div t-if="data.cash_moves and data.cash_moves.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">CASH IN / OUT (EXPENSES)</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <t t-foreach="data.cash_moves" t-as="move" t-key="move.id">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;">
+                                    <strong t-if="move.type == 'out'">OUT</strong><strong t-else="">IN</strong>
+                                    <span t-esc="move.time"/> · <span t-esc="move.reason"/>
+                                    <t t-if="move.category"><br/><span style="font-size: 10px;" t-esc="move.category"/></t>
+                                    <t t-if="move.by"><span style="font-size: 10px;"> · <t t-esc="move.by"/></span></t>
+                                </td>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000; white-space: nowrap;" t-esc="formatCurrency(move.amount)"/>
+                            </tr>
+                        </t>
+                        <tr style="background-color: #f0f0f0;">
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Total Cash Out:</td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(data.cash_out_total)"/>
+                        </tr>
+                        <tr t-if="data.cash_in_total">
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Total Cash In:</td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(data.cash_in_total)"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Closing -->
+            <div t-if="data.closing" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">CLOSING</strong>
+                <t t-set="cash" t-value="data.closing.cash"/>
+                <table t-if="cash" style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <tr><td style="text-align: left; padding: 3px; border: 1px solid #000;">Opening Cash:</td><td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cash.opening)"/></tr>
+                        <tr><td style="text-align: left; padding: 3px; border: 1px solid #000;">Cash Payments:</td><td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cash.payments)"/></tr>
+                        <tr><td style="text-align: left; padding: 3px; border: 1px solid #000;">Cash In / Out:</td><td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cash.moves)"/></tr>
+                        <tr style="background-color: #f0f0f0;"><td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Expected Cash:</td><td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(cash.expected)"/></tr>
+                        <tr t-if="cash.counted !== null"><td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;">Counted Cash:</td><td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(cash.counted)"/></tr>
+                        <tr t-if="cash.difference !== null">
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                <t t-if="cash.difference &lt; 0">SHORTAGE:</t>
+                                <t t-elif="cash.difference &gt; 0">OVERAGE:</t>
+                                <t t-else="">DIFFERENCE:</t>
+                            </td>
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold; font-size: 14px;" t-esc="formatCurrency(cash.difference)"/>
+                        </tr>
+                    </tbody>
+                </table>
+                <table t-if="data.closing.methods.filter((m) => !m.is_cash).length" style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000;">Method</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000;">Expected</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000;">Diff.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.closing.methods.filter((m) => !m.is_cash)" t-as="m" t-key="m.method">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="m.method"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(m.expected)"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;"><t t-if="m.difference !== null" t-esc="formatCurrency(m.difference)"/><t t-else="">-</t></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <div t-if="!data.closing.is_closing" style="font-size: 10px; margin-top: 3px;">Session still open: counted cash and difference are printed at closing.</div>
+                <div t-if="data.closing.notes" style="margin-top: 5px;"><strong>Notes:</strong> <span t-esc="data.closing.notes"/></div>
+            </div>
+
             <!-- Footer -->
             <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid #000; font-size: 10px;">
                 <span t-esc="currentDateTime"/><br/>
@@ -382,6 +453,77 @@
                         </t>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Cash in / out -->
+            <div t-if="data.cash_moves and data.cash_moves.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">الإيداع والسحب النقدي (المصاريف)</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <t t-foreach="data.cash_moves" t-as="move" t-key="move.id">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;">
+                                    <strong t-if="move.type == 'out'">سحب</strong><strong t-else="">إيداع</strong>
+                                    <span t-esc="move.time"/> · <span t-esc="move.reason"/>
+                                    <t t-if="move.category"><br/><span style="font-size: 10px;" t-esc="move.category"/></t>
+                                    <t t-if="move.by"><span style="font-size: 10px;"> · <t t-esc="move.by"/></span></t>
+                                </td>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000; white-space: nowrap;" t-esc="formatCurrency(move.amount)"/>
+                            </tr>
+                        </t>
+                        <tr style="background-color: #f0f0f0;">
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">إجمالي السحب:</td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(data.cash_out_total)"/>
+                        </tr>
+                        <tr t-if="data.cash_in_total">
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">إجمالي الإيداع:</td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(data.cash_in_total)"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Closing -->
+            <div t-if="data.closing" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">إغلاق الصندوق</strong>
+                <t t-set="cash" t-value="data.closing.cash"/>
+                <table t-if="cash" style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <tbody>
+                        <tr><td style="text-align: right; padding: 3px; border: 1px solid #000;">نقد الافتتاح:</td><td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cash.opening)"/></tr>
+                        <tr><td style="text-align: right; padding: 3px; border: 1px solid #000;">المبيعات النقدية:</td><td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cash.payments)"/></tr>
+                        <tr><td style="text-align: right; padding: 3px; border: 1px solid #000;">الإيداع / السحب:</td><td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(cash.moves)"/></tr>
+                        <tr style="background-color: #f0f0f0;"><td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">النقد المتوقع:</td><td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(cash.expected)"/></tr>
+                        <tr t-if="cash.counted !== null"><td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold;">النقد المعدود:</td><td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;" t-esc="formatCurrency(cash.counted)"/></tr>
+                        <tr t-if="cash.difference !== null">
+                            <td style="text-align: right; padding: 3px; border: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                <t t-if="cash.difference &lt; 0">عجز:</t>
+                                <t t-elif="cash.difference &gt; 0">زيادة:</t>
+                                <t t-else="">الفرق:</t>
+                            </td>
+                            <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold; font-size: 14px;" t-esc="formatCurrency(cash.difference)"/>
+                        </tr>
+                    </tbody>
+                </table>
+                <table t-if="data.closing.methods.filter((m) => !m.is_cash).length" style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000;">الطريقة</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000;">المتوقع</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000;">الفرق</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.closing.methods.filter((m) => !m.is_cash)" t-as="m" t-key="m.method">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="m.method"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(m.expected)"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000; font-weight: bold;"><t t-if="m.difference !== null" t-esc="formatCurrency(m.difference)"/><t t-else="">-</t></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <div t-if="!data.closing.is_closing" style="font-size: 10px; margin-top: 3px;">الجلسة مفتوحة: النقد المعدود والفرق يطبعان عند الإغلاق.</div>
+                <div t-if="data.closing.notes" style="margin-top: 5px;"><strong>ملاحظات:</strong> <span t-esc="data.closing.notes"/></div>
             </div>
 
             <!-- Footer -->
