@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "POS Session Report for Admins (USB Printers)",
-    "version": "18.0.1.5.0",
+    "version": "18.0.1.6.0",
     "category": "Point of Sale",
     "summary": "Print the session sales report on regular USB printers, visible to session admins only",
     "description": """

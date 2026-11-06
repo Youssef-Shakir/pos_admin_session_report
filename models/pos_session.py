@@ -100,6 +100,31 @@ class PosSession(models.Model):
         return result
 
     @api.model
+    def _report_card_differences(self, session):
+        """{payment_method_id: difference} posted at closing on the card / bank methods.
+
+        Odoo books them on the bank journal's profit (gain) / loss account: in the session's combined
+        payment, or for split methods in an entry whose reference ends with "(<session name>)"."""
+        methods = session.payment_method_ids.filtered(lambda m: m.type == 'bank' and m.journal_id)
+        result = {}
+        for method in methods:
+            journal = method.journal_id
+            accounts = journal.profit_account_id | journal.loss_account_id
+            if not accounts:
+                continue
+            if method.split_transactions:
+                origin = [('journal_id', '=', journal.id), ('move_id.ref', 'ilike', '(%s)' % session.name)]
+            else:
+                origin = [('move_id.origin_payment_id.pos_session_id', '=', session.id),
+                          ('move_id.origin_payment_id.pos_payment_method_id', '=', method.id)]
+            lines = self.env['account.move.line'].sudo().search(
+                [('account_id', 'in', accounts.ids), ('parent_state', '=', 'posted')] + origin)
+            if lines:
+                # Gain is a credit on the profit account, loss a debit on the loss account.
+                result[method.id] = -sum(lines.mapped('balance'))
+        return result
+
+    @api.model
     def _report_closing(self, session, closing=None):
         """Expected / counted / difference per payment method.
 
@@ -135,9 +160,16 @@ class PosSession(models.Model):
                 'difference': None if count is None else count - expected,
             }
             methods.append(dict(cash, is_cash=True))
+        posted_diffs = self._report_card_differences(session) if session.state == 'closed' and not counted else {}
         for method in session.payment_method_ids.filtered(lambda m: not m.is_cash_count):
             expected = by_method.get(method, 0.0)
-            count = float(counted[method.id]) if method.id in counted else None
+            if method.id in counted:
+                count = float(counted[method.id])
+            elif session.state == 'closed' and method.type == 'bank':
+                # After closing the count isn't stored: it is expected + the posted closing difference.
+                count = expected + posted_diffs.get(method.id, 0.0)
+            else:
+                count = None
             methods.append({
                 'method': method.name, 'is_cash': False, 'expected': expected, 'counted': count,
                 'difference': None if count is None else count - expected,
