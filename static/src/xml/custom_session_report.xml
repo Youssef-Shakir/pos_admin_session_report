@@ -173,6 +173,32 @@
                 </table>
             </div>
 
+            <!-- Edited Open Orders -->
+            <div t-if="data.edited_lines and data.edited_lines.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">EDITED OPEN ORDERS</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">Order / Item</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">By</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.edited_lines" t-as="edit" t-key="edit.id">
+                            <tr>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;"><strong>#<t t-esc="edit.ref"/><t t-if="edit.table"> T<t t-esc="edit.table"/></t></strong> <t t-esc="edit.time"/><br/><t t-esc="edit.item"/>: <t t-if="edit.qty_after"><t t-esc="edit.qty_before"/> → <t t-esc="edit.qty_after"/></t><t t-else="">Removed <t t-esc="edit.qty_before"/></t></td>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="edit.by"/>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(edit.amount)"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: left; padding: 3px; border: 1px solid #000;"><strong>Reason:</strong> <t t-if="edit.reason" t-esc="edit.reason"/><t t-else="">No reason entered</t></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Payments -->
             <div style="margin-bottom: 10px;">
                 <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">PAYMENTS</strong>
@@ -440,6 +466,32 @@
                             </tr>
                             <tr>
                                 <td colspan="3" style="text-align: right; padding: 3px; border: 1px solid #000;"><strong>السبب:</strong> <t t-if="canc.reason" t-esc="canc.reason"/><t t-else="">لم يتم إدخال سبب</t></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Edited Open Orders -->
+            <div t-if="data.edited_lines and data.edited_lines.length" style="margin-bottom: 10px;">
+                <strong style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #000; display: block; padding-bottom: 3px;">تعديلات الطلبات المفتوحة</strong>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">الطلب / المنتج</th>
+                            <th style="text-align: right; padding: 4px; border: 1px solid #000; font-weight: bold;">بواسطة</th>
+                            <th style="text-align: left; padding: 4px; border: 1px solid #000; font-weight: bold;">القيمة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.edited_lines" t-as="edit" t-key="edit.id">
+                            <tr>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;"><strong>#<t t-esc="edit.ref"/><t t-if="edit.table"> طاولة <t t-esc="edit.table"/></t></strong> <t t-esc="edit.time"/><br/><t t-esc="edit.item"/>: <t t-if="edit.qty_after"><t t-esc="edit.qty_before"/> → <t t-esc="edit.qty_after"/></t><t t-else="">حذف <t t-esc="edit.qty_before"/></t></td>
+                                <td style="text-align: right; padding: 3px; border: 1px solid #000;" t-esc="edit.by"/>
+                                <td style="text-align: left; padding: 3px; border: 1px solid #000;" t-esc="formatCurrency(edit.amount)"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 3px; border: 1px solid #000;"><strong>السبب:</strong> <t t-if="edit.reason" t-esc="edit.reason"/><t t-else="">لم يتم إدخال سبب</t></td>
                             </tr>
                         </t>
                     </tbody>

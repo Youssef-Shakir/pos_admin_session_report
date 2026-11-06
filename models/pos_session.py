@@ -72,6 +72,31 @@ class PosSession(models.Model):
         return result
 
     @api.model
+    def _get_report_edited_lines(self, session):
+        """Lines reduced / removed from open orders with the reason (pos.order.edit.log from
+        dev_pos_access_rights when installed)."""
+        if 'pos.order.edit.log' not in self.env:
+            return []
+        logs = self.env['pos.order.edit.log'].sudo().search(
+            [('session_id', '=', session.id)], order='date, id')
+        result = []
+        for log in logs:
+            ref, table = self._report_order_label(log.order_id)
+            result.append({
+                'id': log.id,
+                'ref': ref,
+                'table': table,
+                'time': fields.Datetime.context_timestamp(self, log.date).strftime('%H:%M'),
+                'by': log.edited_by or '',
+                'item': log.product_name or '',
+                'qty_before': log.qty_before,
+                'qty_after': log.qty_after,
+                'amount': log.amount,
+                'reason': log.reason or '',
+            })
+        return result
+
+    @api.model
     def _report_cash_moves(self, session):
         """Cash in / cash out of the session (expenses paid from the drawer, owner collections...),
         with the category when Expenses & Cash Control categorized them."""
@@ -351,6 +376,7 @@ class PosSession(models.Model):
             'total_discount': total_discount,
             'discount_orders': [dict(d, items=', '.join(d['items'])) for d in discount_orders.values()],
             'cancelled_orders': self._get_report_cancelled_orders(session),
+            'edited_lines': self._get_report_edited_lines(session),
             'total_refunds': total_refunds,
             'net_total': net_total,
             'deleted_orders': deleted_orders,
